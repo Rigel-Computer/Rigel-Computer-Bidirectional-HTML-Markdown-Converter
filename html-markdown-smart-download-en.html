@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML ↔ Markdown Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    textarea {
+      width: 100%;
+      height: 400px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: white;
+    }
+    .note {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      width: fit-content;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTML ↔ Markdown Converter</h1>
+  <p class="note">Enter HTML or Markdown in either field. The other side will update automatically.</p>
+  <div class="container">
+    <textarea id="htmlInput" placeholder="Enter HTML here..."></textarea>
+    <textarea id="markdownOutput" placeholder="Enter Markdown here..."></textarea>
+  </div>
+  <button id="downloadBtn">Download .md or .html</button>
+
+  <script>
+    const htmlInput = document.getElementById("htmlInput");
+    const markdownOutput = document.getElementById("markdownOutput");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    const turndownService = new TurndownService(); // HTML → Markdown
+    const showdownConverter = new showdown.Converter(); // Markdown → HTML
+
+    let isUpdating = false;
+
+    htmlInput.addEventListener("input", () => {
+      if (isUpdating) return;
+      isUpdating = true;
+      const html = htmlInput.value;
+      const markdown = turndownService.turndown(html);
+      markdownOutput.value = markdown;
+      isUpdating = false;
+    });
+
+    markdownOutput.addEventListener("input", () => {
+      if (isUpdating) return;
+      isUpdating = true;
+      const markdown = markdownOutput.value;
+      const html = showdownConverter.makeHtml(markdown);
+      htmlInput.value = html;
+      isUpdating = false;
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      const htmlContent = htmlInput.value.trim();
+      const markdownContent = markdownOutput.value.trim();
+
+      let content = "";
+      let filename = "";
+      let type = "";
+
+      if (markdownContent && !htmlContent) {
+        content = markdownContent;
+        filename = "converted.md";
+        type = "text/markdown";
+      } else if (htmlContent && !markdownContent) {
+        content = htmlContent;
+        filename = "converted.html";
+        type = "text/html";
+      } else if (htmlContent.length >= markdownContent.length) {
+        content = htmlContent;
+        filename = "converted.html";
+        type = "text/html";
+      } else {
+        content = markdownContent;
+        filename = "converted.md";
+        type = "text/markdown";
+      }
+
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
